@@ -31,12 +31,6 @@ import { ApplicationError } from "@app/internal/errors";
 import { StatusCodes } from "http-status-codes";
 import { HistoryRepository } from "@app/histories";
 import INTERNAL_TYPES from "@app/internal/types";
-import {
-  S3Client,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { EnvConfig } from "@app/internal/env";
 
 type ControllerResponse =
@@ -51,7 +45,6 @@ export class FileController extends Controller<ControllerResponse> {
   @inject(APP_TYPES.UserRepository) private users: UserRepository;
   @inject(APP_TYPES.FileRepository) repo: FileRepository;
   @inject(APP_TYPES.HistoryRepository) history: HistoryRepository;
-  @inject(INTERNAL_TYPES.S3Config) s3: S3Client;
   @inject(INTERNAL_TYPES.Env) env: EnvConfig;
 
   @httpPost(
@@ -66,8 +59,9 @@ export class FileController extends Controller<ControllerResponse> {
     @requestBody() dto: FileDTO
   ) {
     const user = await this.users.getById(req.session.id);
+    console.log(req.file);
     const file = await this.repo.create({
-      file: req.file?.location,
+      file: req.file?.file,
       size: req.file.size,
       file_name: dto.file_name,
       description: dto?.description,
@@ -103,19 +97,11 @@ export class FileController extends Controller<ControllerResponse> {
     if (!file) {
       throw new ApplicationError(StatusCodes.NOT_FOUND, "File not found");
     }
-
-    const imageName = file.file.split(".com/")[1];
-
-    const downloadUrl = await getSignedUrl(
-      this.s3,
-      new GetObjectCommand({
-        Bucket: this.env.bucket_name,
-        Key: imageName,
-      }),
-      { expiresIn: 3600 }
-    );
+    const url = file.file.split("/upload/");
+    const downloadUrl = `${url[0]}/upload/fl_attachment:${file.file_name}/${url[1]}`;
 
     this.send(req, res, { link: downloadUrl });
+
     await this.history.record({
       file_id: file.id,
       file_status: "download",
@@ -135,14 +121,6 @@ export class FileController extends Controller<ControllerResponse> {
   ) {
     await Promise.all(
       dto.ids.map(async (id) => {
-        const file = await this.repo.getById(id);
-        const imageName = file.file.split(".com/")[1];
-        this.s3.send(
-          new DeleteObjectCommand({
-            Bucket: this.env.bucket_name,
-            Key: imageName,
-          })
-        );
         await this.repo.deleteFile(id);
         return;
       })

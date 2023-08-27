@@ -22,8 +22,6 @@ import { FileRepository } from "@app/files";
 import { AuthMiddleware } from "@app/http/middlewares/auth";
 import { AccessMiddleware } from "./http/middlewares/access";
 import { HistoryRepository } from "@app/histories";
-import { createS3 } from "./config/s3";
-import * as AWS from "@aws-sdk/client-s3";
 
 async function isHealthy(redis: Redis, pg: Knex) {
   if (redis.status !== "ready") {
@@ -59,10 +57,6 @@ const start = async () => {
     // setup in-memory store
     const redis = await createRedis(logger, env);
     container.bind<Redis>(INTERNAL_TYPES.Redis).toConstantValue(redis);
-
-    // setup cloud memory
-    const s3 = await createS3(env);
-    container.bind<AWS.S3Client>(INTERNAL_TYPES.S3Config).toConstantValue(s3);
 
     const redisStore = new RedisStore(env.session_secret, redis);
     container

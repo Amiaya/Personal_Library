@@ -9,7 +9,6 @@ import { Container } from "inversify";
 import Redis from "ioredis";
 import fs from "fs";
 import { Knex } from "knex";
-import * as AWS from "@aws-sdk/client-s3";
 import { createPostgres } from "@app/config/postgres";
 import { Logger, RedisStore, defaultSerializers } from "@risemaxi/octonet";
 import { createRedis } from "@app/config/redis";
@@ -29,7 +28,6 @@ import { StatusCodes } from "http-status-codes";
 import { HistoryRepository } from "@app/histories";
 import { AccessMiddleware } from "@app/http/middlewares/access";
 import { GenericMessage } from "@app/internal/http";
-import { createS3 } from "@app/config/s3";
 
 chai.use(chaiAsPromised);
 
@@ -61,9 +59,6 @@ beforeAll(async () => {
   container.bind<Redis>(INTERNAL_TYPES.Redis).toConstantValue(redis);
 
   const redisStore = new RedisStore(env.session_secret, redis);
-
-  const s3 = await createS3(env);
-  container.bind<AWS.S3Client>(INTERNAL_TYPES.S3Config).toConstantValue(s3);
   container
     .bind<RedisStore>(INTERNAL_TYPES.RedisStore)
     .toConstantValue(redisStore);

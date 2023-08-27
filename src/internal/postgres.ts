@@ -52,6 +52,8 @@ type RawPaginatedResults<T> = T & { item_count: string };
 export interface PaginatedResult<T> {
   items: T[];
   item_count: number;
+  offset: number;
+  limit: number;
 }
 
 @injectable()
@@ -79,7 +81,7 @@ export class Repository<T> {
       .offset(offset);
 
     if (raw.length === 0) {
-      return { item_count: 0, items: [] };
+      return { item_count: 0, offset, limit, items: [] };
     }
 
     const total = parseInt(raw[0].item_count);
@@ -87,7 +89,7 @@ export class Repository<T> {
       delete r["item_count"];
     });
 
-    return { item_count: total, items: raw };
+    return { item_count: total, offset, limit, items: raw };
   }
 }
 
