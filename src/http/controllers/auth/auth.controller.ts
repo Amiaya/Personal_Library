@@ -79,6 +79,40 @@ export class AuthController extends Controller<ControllerResponse> {
     }
   }
 
+  @httpPost("/signup/admin", autoValidate(isSignup))
+  async adminSignup(
+    @request() req: Request,
+    @response() res: Response,
+    @requestBody() dto: SignupDTO
+  ) {
+    try {
+      const password_hash = await this.userService.getHash(dto.password);
+      const user = await this.userRepo.create({
+        email: dto.email,
+        first_name: dto.first_name,
+        last_name: dto.last_name,
+        account_type: "admin",
+        password_hash: Buffer.from(password_hash),
+      });
+
+      const token = await this.userService.getAuthToken({
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        account_type: user.account_type,
+      });
+
+      this.send(req, res, { user, token, token_ttl: this.env.session_ttl });
+    } catch (error) {
+      if (error instanceof DuplicateUser) {
+        throw new ApplicationError(StatusCodes.CONFLICT, error.message);
+      }
+
+      throw error;
+    }
+  }
+
   @httpPost("/login", autoValidate(isLogin))
   async login(
     @request() req: Request,
