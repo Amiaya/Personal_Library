@@ -63,7 +63,7 @@ export const envSchema = {
   mail_user: Joi.string().required(),
   mail_pass: Joi.string().required(),
   postgres_host: Joi.string().required(),
-  postgres_port: Joi.number().required(),
+  postgres_port: Joi.number(),
   postgres_db: Joi.string().required(),
   postgres_user: Joi.string().required(),
   postgres_password: Joi.string().required(),
@@ -75,10 +75,6 @@ export const envSchema = {
     otherwise: trimmedString.optional(),
   }),
   cloudinary_url: Joi.string().uri({ scheme: "cloudinary" }).trim().required(),
-  access_key: Joi.string().trim().required(),
-  secret_access_key: Joi.string().trim().required(),
-  region: Joi.string().trim().required(),
-  bucket_name: Joi.string().trim().required(),
 };
 
 /**
@@ -158,22 +154,6 @@ export interface EnvConfig {
    * Redis passord
    */
   redis_password: string;
-  /*
-   *  Access key
-   */
-  access_key: string;
-  /*
-   * Secret key
-   */
-  secret_access_key: string;
-  /*
-   * Region
-   */
-  region: string;
-  /*
-   * Bucket name
-   */
-  bucket_name: string;
 }
 
 export default class Environment {
