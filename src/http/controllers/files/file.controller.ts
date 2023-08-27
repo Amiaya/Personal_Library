@@ -59,7 +59,6 @@ export class FileController extends Controller<ControllerResponse> {
     @requestBody() dto: FileDTO
   ) {
     const user = await this.users.getById(req.session.id);
-    console.log(req.file);
     const file = await this.repo.create({
       file: req.file?.file,
       size: req.file.size,
